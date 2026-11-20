@@ -43,7 +43,7 @@ double norm_pdf(double x) { return kInvSqrt2Pi * std::exp(-0.5 * x * x); }
 
 double price(const EuropeanOption& opt, const Market& mkt) {
     validate(opt, mkt);
-    const auto [d1, d2, sqrt_t, df_r, df_q] = terms(opt, mkt);  // C++17 structured binding
+    const auto [d1, d2, sqrt_t, df_r, df_q] = terms(opt, mkt);  // structured binding (C++17 feature)
     const double S = mkt.spot, K = opt.strike;
 
     if (opt.type == OptionType::Call)

@@ -1,0 +1,9 @@
+.git
+.github
+.venv
+build
+python/*.so
+**/__pycache__
+.pytest_cache
+bench
+tests

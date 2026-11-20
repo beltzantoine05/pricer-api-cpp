@@ -1,9 +1,9 @@
 # pricer-cpp
 
-A small option pricing library with a **C++17 core**, exposed to **Python** through pybind11 and served as a **REST API** with FastAPI. It mirrors how bank pricing libraries are organised: C++ computes, other languages consume.
+A small option pricing library with a **C++20 core**, exposed to **Python** through pybind11 and served as a **REST API** with FastAPI. It mirrors how bank pricing libraries are organised: C++ computes, other languages consume.
 
 ```
-core/       C++17 library: Black-Scholes, Greeks, implied vol, Monte Carlo
+core/       C++20 library: Black-Scholes, Greeks, implied vol, Monte Carlo
 tests/      GoogleTest suite (12 tests)
 bindings/   pybind11 module -> `import pricer`
 api/        FastAPI service + pytest suite (8 tests)
@@ -31,7 +31,7 @@ bench/      C++ vs NumPy vs pure Python benchmark
 
 ## Build and run
 
-Requirements: a C++17 compiler (GCC or Clang) and Python 3.10+.
+Requirements: a C++20 compiler (GCC or Clang) and Python 3.10+.
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
@@ -66,6 +66,19 @@ curl -X POST localhost:8000/bs/price -H 'Content-Type: application/json' \
 ```
 
 Endpoints: `GET /health`, `POST /bs/price`, `/bs/greeks`, `/bs/implied-vol`, `/mc/european`, `/mc/asian`.
+
+### With Docker
+
+Multi-stage image: the C++ module is compiled in a build stage, and the runtime image only holds the compiled module and the API, running as a non-root user with a health check.
+
+```bash
+docker build -t pricer-api .
+docker run -p 8000:8000 pricer-api
+```
+
+## CI
+
+GitHub Actions runs on every push: CMake build, C++ tests (ctest), API tests (pytest), then builds the Docker image and smoke-tests the running container.
 
 ## Benchmark
 

@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Configure
+        run: >
+          cmake -S . -B build -G Ninja
+          -DPython_EXECUTABLE="$(which python)"
+          -Dpybind11_DIR="$(python -m pybind11 --cmakedir)"
+
+      - name: Build
+        run: cmake --build build
+
+      - name: C++ tests
+        run: ctest --test-dir build --output-on-failure
+
+      - name: API tests
+        run: python -m pytest -q api
+
+  docker:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t pricer-api .
+
+      - name: Smoke test the container
+        run: |
+          docker run -d --name pricer -p 8000:8000 pricer-api
+          for i in $(seq 1 20); do
+            curl -sf localhost:8000/health && break
+            sleep 1
+          done
+          curl -sf -X POST localhost:8000/bs/price \
+            -H 'Content-Type: application/json' \
+            -d '{"type":"call","spot":100,"strike":100,"maturity":1,"rate":0.05,"vol":0.2}'
+          docker logs pricer
